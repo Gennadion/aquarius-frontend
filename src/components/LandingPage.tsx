@@ -132,7 +132,7 @@ export function LandingPage() {
           {/* Hero Content */}
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold text-blue-900 mb-4">
-              Paphos Dam Data Tracking
+              Paphos Dam Levels & Water Consumption Tracking
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Real-time monitoring and analytics for Paphos
