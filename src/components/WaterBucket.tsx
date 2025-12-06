@@ -1,9 +1,11 @@
 interface WaterBucketProps {
   percentage: number;
   message: string;
+  totalCapacityMcm: number;
+  totalStorageMcm: number;
 }
 
-export function WaterBucket({ percentage, message }: WaterBucketProps) {
+export function WaterBucket({ percentage, message, totalCapacityMcm, totalStorageMcm }: WaterBucketProps) {
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto">
       <h2 className="text-blue-800 mb-6 text-center">
@@ -104,11 +106,11 @@ export function WaterBucket({ percentage, message }: WaterBucketProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-gray-500 text-sm mb-1">Total Capacity</div>
-              <div className="text-gray-900 font-semibold">XXX MCM</div>
+              <div className="text-gray-900 font-semibold">{totalCapacityMcm.toLocaleString()} MCM</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-gray-500 text-sm mb-1">Current Volume</div>
-              <div className="text-gray-900 font-semibold">XXX MCM</div>
+              <div className="text-gray-900 font-semibold">{totalStorageMcm.toLocaleString()} MCM</div>
             </div>
           </div>
         </div>

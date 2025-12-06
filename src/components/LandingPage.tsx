@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { WaterBucket } from "@/components/WaterBucket";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -13,9 +13,31 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import Link from "next/link";
+import { getSummary, SummaryModel } from "@/services/summary";
 
 export function LandingPage() {
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [summary, setSummary] = useState<SummaryModel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getSummary();
+        setSummary(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load summary data");
+        console.error("Error fetching summary:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummary();
+  }, []);
 
   const handleMenuClick = () => {
     setIsNavOpen(true);
@@ -137,10 +159,22 @@ export function LandingPage() {
 
           {/* Overall Capacity Section */}
           <div className="mt-12">
-            <WaterBucket 
-              percentage={68}
-              message="All Cyprus dams are currently at 68% capacity. Water levels are stable and within normal range for this time of year. Continue monitoring for any significant changes in reservoir levels."
-            />
+            {loading ? (
+              <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
+                <p className="text-gray-600">Loading dam capacity data...</p>
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
+                <p className="text-red-600">Error: {error}</p>
+              </div>
+            ) : summary ? (
+              <WaterBucket 
+                percentage={Math.round(summary.totalPercentage)}
+                message={`All Cyprus dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
+                totalCapacityMcm={summary.totalCapacityMcm}
+                totalStorageMcm={summary.totalStorageMcm}
+              />
+            ) : null}
           </div>
 
           {/* Feature Cards */}
