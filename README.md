@@ -1,4 +1,4 @@
-# Aquarius Frontend
+# AquaWise Frontend
 
 A modern frontend project built with Next.js 14, TypeScript, and Tailwind CSS.
 
@@ -31,7 +31,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ## Project Structure
 
 ```
-aquarius-frontend/
+aquawise-frontend/
 ├── public/                    # Static assets
 │   ├── fonts/                 # Custom fonts
 │   └── images/                # Images and icons

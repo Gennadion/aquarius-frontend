@@ -5,8 +5,8 @@ import { PeriodStoreProvider } from '@/store/period-store'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Aquarius',
-  description: 'Welcome to Aquarius',
+  title: 'AquaWise',
+  description: 'Welcome to AquaWise',
 }
 
 export default function RootLayout({

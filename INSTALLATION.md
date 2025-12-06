@@ -44,7 +44,7 @@ winget install OpenJS.NodeJS.LTS
 1. **Restart your terminal** (PowerShell/Command Prompt) to refresh PATH
 2. Navigate to your project directory:
    ```powershell
-   cd C:\Users\Genn\WebstormProjects\aquarius-frontend
+   cd C:\Users\Genn\WebstormProjects\aquawise-frontend
    ```
 3. Install project dependencies:
    ```powershell

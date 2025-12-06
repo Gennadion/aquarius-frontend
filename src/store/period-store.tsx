@@ -10,7 +10,7 @@ interface PeriodStoreContextType {
 
 const PeriodStoreContext = createContext<PeriodStoreContextType | undefined>(undefined);
 
-const STORAGE_KEY = "aquarius-period";
+const STORAGE_KEY = "aquawise-period";
 const DEFAULT_PERIOD = "";
 
 interface PeriodStoreProviderProps {

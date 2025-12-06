@@ -31,13 +31,13 @@ export function DamPage() {
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center overflow-hidden">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1645616265871-be6186d5a019?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYW0lMjB3YXRlciUyMHJlc2Vydm9pcnxlbnwxfHx8fDE3NjUwMjQ3Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                alt="Water background"
+                src="/images/logo.png"
+                alt="AquaWise Logo"
                 className="w-full h-full object-cover opacity-60"
               />
             </div>
             <span className="text-blue-600 font-semibold tracking-wide">
-              AQUARIUS
+              AquaWise
             </span>
           </Link>
 
