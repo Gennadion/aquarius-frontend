@@ -41,17 +41,18 @@ function WaterSurfaceWave({ waterLevel, color }: WaterSurfaceWaveProps) {
   );
 }
 
-type StatusLevel = 'red' | 'orange' | 'green';
+type StatusLevel = 'emergency' | 'orange' | 'amber' | 'green';
 
 function getStatusLevel(percentage: number): StatusLevel {
-  if (percentage < 30) return 'red';
-  if (percentage < 60) return 'orange';
+  if (percentage < 25) return 'emergency';
+  if (percentage < 40) return 'orange';
+  if (percentage < 60) return 'amber';
   return 'green';
 }
 
 function getStatusColors(status: StatusLevel) {
   switch (status) {
-    case 'red':
+    case 'emergency':
       return {
         waterGradient: { start: '#ef4444', end: '#dc2626' }, // red-500 to red-600
         waterSurface: '#f87171', // red-400
@@ -68,6 +69,15 @@ function getStatusColors(status: StatusLevel) {
         bgColor: 'bg-orange-50',
         borderColor: 'border-orange-200',
         titleColor: 'text-orange-800',
+      };
+    case 'amber':
+      return {
+        waterGradient: { start: '#f59e0b', end: '#d97706' }, // amber-500 to amber-600
+        waterSurface: '#fbbf24', // amber-400
+        textColor: 'text-amber-900',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        titleColor: 'text-amber-800',
       };
     case 'green':
       return {

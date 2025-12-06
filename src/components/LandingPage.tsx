@@ -140,6 +140,83 @@ export function LandingPage() {
             </p>
           </div>
 
+        {/* Overall Capacity Section */}
+        <div className="mt-12">
+
+            {error ? (
+                <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
+                    <p className="text-red-600">Error: {error}</p>
+                </div>
+            ) : summary ? (
+                <WaterBucket
+                    percentage={Math.round(summary.totalPercentage)}
+                    message={`All Paphos dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
+                    totalCapacityMcm={summary.totalCapacityMcm}
+                    totalStorageMcm={summary.totalStorageMcm}
+                />
+            ) : null}
+            {/* Date Picker Dropdown */}
+            <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto mb-6">
+                <button
+                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                    className="w-full flex items-center justify-between text-left"
+                >
+            <span className="text-lg font-semibold text-gray-900">
+              Filter by Date
+            </span>
+                    {isDatePickerOpen ? (
+                        <ChevronUp className="h-5 w-5 text-gray-500" />
+                    ) : (
+                        <ChevronDown className="h-5 w-5 text-gray-500" />
+                    )}
+                </button>
+
+                {isDatePickerOpen && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <form onSubmit={handleDateSubmit} className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1">
+                                <label htmlFor="target-date" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Target Date (DD.MM.YYYY)
+                                </label>
+                                <input
+                                    id="target-date"
+                                    type="text"
+                                    placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
+                                    value={targetDate}
+                                    onChange={(e) => setTargetDate(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    pattern="\d{2}\.\d{2}\.\d{4}"
+                                    title="Please enter date in DD.MM.YYYY format"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Leave empty to view current data
+                                </p>
+                            </div>
+                            <div className="flex items-end gap-2">
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                    {loading ? "Loading..." : "Apply"}
+                                </Button>
+                                {targetDate && (
+                                    <Button
+                                        type="button"
+                                        onClick={handleResetDate}
+                                        variant="outline"
+                                        disabled={loading}
+                                    >
+                                        Reset
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+                )}
+            </div>
+        </div>
+
           {/* About Section */}
           <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto">
             <h2 className="text-2xl font-semibold text-blue-800 mb-6 text-center">
@@ -147,105 +224,12 @@ export function LandingPage() {
             </h2>
             <div className="space-y-4 text-gray-700">
               <p>
-                Lorem ipsum dolor sit amet, consectetur
-                adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation
-                ullamco laboris nisi ut aliquip ex ea commodo
-                consequat.
+                  Paphos Dam Levels Tracking exists to provide clear, reliable, and up-to-date information about the water levels in the dams that support our communities. Water is one of Cyprus’ most critical resources, and understanding how much we have - and how quickly it changes - helps everyone make better decisions.
               </p>
               <p>
-                Duis aute irure dolor in reprehenderit in
-                voluptate velit esse cillum dolore eu fugiat
-                nulla pariatur. Excepteur sint occaecat
-                cupidatat non proident, sunt in culpa qui
-                officia deserunt mollit anim id est laborum.
-              </p>
-              <p>
-                Sed ut perspiciatis unde omnis iste natus error
-                sit voluptatem accusantium doloremque
-                laudantium, totam rem aperiam, eaque ipsa quae
-                ab illo inventore veritatis et quasi architecto
-                beatae vitae dicta sunt explicabo.
+                  By tracking Paphos’ dam levels consistently and clearly, we aim to help protect our island’s most valuable resource and encourage sustainable water management for today and the future.
               </p>
             </div>
-          </div>
-
-          {/* Overall Capacity Section */}
-          <div className="mt-12">
-            {/* Date Picker Dropdown */}
-            <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto mb-6">
-              <button
-                onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                className="w-full flex items-center justify-between text-left"
-              >
-                <span className="text-lg font-semibold text-gray-900">
-                  Filter by Date
-                </span>
-                {isDatePickerOpen ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
-                )}
-              </button>
-              
-              {isDatePickerOpen && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <form onSubmit={handleDateSubmit} className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                      <label htmlFor="target-date" className="block text-sm font-medium text-gray-700 mb-2">
-                        Target Date (DD.MM.YYYY)
-                      </label>
-                      <input
-                        id="target-date"
-                        type="text"
-                        placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
-                        value={targetDate}
-                        onChange={(e) => setTargetDate(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        pattern="\d{2}\.\d{2}\.\d{4}"
-                        title="Please enter date in DD.MM.YYYY format"
-                      />
-                      <p className="mt-1 text-xs text-gray-500">
-                        Leave empty to view current data
-                      </p>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {loading ? "Loading..." : "Apply"}
-                      </Button>
-                      {targetDate && (
-                        <Button
-                          type="button"
-                          onClick={handleResetDate}
-                          variant="outline"
-                          disabled={loading}
-                        >
-                          Reset
-                        </Button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-
-            {error ? (
-              <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
-                <p className="text-red-600">Error: {error}</p>
-              </div>
-            ) : summary ? (
-              <WaterBucket 
-                percentage={Math.round(summary.totalPercentage)}
-                message={`All Paphos dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
-                totalCapacityMcm={summary.totalCapacityMcm}
-                totalStorageMcm={summary.totalStorageMcm}
-              />
-            ) : null}
           </div>
 
           {/* Feature Cards */}
