@@ -1,10 +1,44 @@
-import { useId } from 'react';
+import { useId, useEffect, useState, useRef, useMemo } from 'react';
 
 interface WaterBucketProps {
   percentage: number;
   message: string;
   totalCapacityMcm: number;
   totalStorageMcm: number;
+}
+
+interface WaterSurfaceWaveProps {
+  waterLevel: number;
+  color: string;
+}
+
+function WaterSurfaceWave({ waterLevel, color }: WaterSurfaceWaveProps) {
+  const waveId = useId();
+  const wavePath = useMemo(() => {
+    const baseY = waterLevel;
+    return `M 35 ${baseY} Q 60 ${baseY - 5} 85 ${baseY} T 135 ${baseY} Q 150 ${baseY - 5} 165 ${baseY} L 165 ${baseY + 10} L 35 ${baseY + 10} Z`;
+  }, [waterLevel]);
+
+  const wavePathUp = useMemo(() => {
+    const baseY = waterLevel;
+    return `M 35 ${baseY} Q 60 ${baseY + 5} 85 ${baseY} T 135 ${baseY} Q 150 ${baseY + 5} 165 ${baseY} L 165 ${baseY + 10} L 35 ${baseY + 10} Z`;
+  }, [waterLevel]);
+
+  return (
+    <path
+      d={wavePath}
+      fill={color}
+      opacity="0.6"
+      key={`wave-${waveId}-${waterLevel}`}
+    >
+      <animate
+        attributeName="d"
+        dur="3s"
+        repeatCount="indefinite"
+        values={`${wavePath};${wavePathUp};${wavePath}`}
+      />
+    </path>
+  );
 }
 
 type StatusLevel = 'red' | 'orange' | 'green';
@@ -49,10 +83,64 @@ function getStatusColors(status: StatusLevel) {
 
 export function WaterBucket({ percentage, message, totalCapacityMcm, totalStorageMcm }: WaterBucketProps) {
   const uniqueId = useId();
+  const [animatedPercentage, setAnimatedPercentage] = useState(percentage);
+  const [displayPercentage, setDisplayPercentage] = useState(percentage);
+  const previousPercentageRef = useRef(percentage);
+  const animationFrameRef = useRef<number | null>(null);
+  const currentAnimatedRef = useRef(percentage);
   const status = getStatusLevel(percentage);
   const colors = getStatusColors(status);
   const gradientId = `waterGradient-${status}-${uniqueId}`;
   const clipPathId = `bucketClip-${status}-${uniqueId}`;
+
+  useEffect(() => {
+    // Only animate if percentage actually changed
+    if (previousPercentageRef.current !== percentage) {
+      // Cancel any ongoing animation
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      const startPercentage = currentAnimatedRef.current; // Start from current animated position
+      const endPercentage = percentage;
+      const duration = 1500; // 1.5 seconds
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation (ease-out)
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        
+        const currentPercentage = startPercentage + (endPercentage - startPercentage) * easedProgress;
+        currentAnimatedRef.current = currentPercentage;
+        setAnimatedPercentage(currentPercentage);
+        
+        // Update display percentage with rounding
+        setDisplayPercentage(Math.round(currentPercentage));
+
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          currentAnimatedRef.current = endPercentage;
+          setAnimatedPercentage(endPercentage);
+          setDisplayPercentage(Math.round(endPercentage));
+          previousPercentageRef.current = endPercentage;
+          animationFrameRef.current = null;
+        }
+      };
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+
+    // Cleanup function to cancel animation on unmount
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [percentage]);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto">
@@ -99,29 +187,20 @@ export function WaterBucket({ percentage, message, totalCapacityMcm, totalStorag
                 {/* Water fill */}
                 <rect
                   x="35"
-                  y={260 - (240 * percentage / 100)}
+                  y={260 - (240 * animatedPercentage / 100)}
                   width="130"
-                  height={240 * percentage / 100}
+                  height={240 * animatedPercentage / 100}
                   fill={`url(#${gradientId})`}
+                  style={{
+                    transition: 'y 0.1s ease-out, height 0.1s ease-out'
+                  }}
                 />
                 
                 {/* Water surface wave effect */}
-                <path
-                  d={`M 35 ${260 - (240 * percentage / 100)} Q 60 ${260 - (240 * percentage / 100) - 5} 85 ${260 - (240 * percentage / 100)} T 135 ${260 - (240 * percentage / 100)} Q 150 ${260 - (240 * percentage / 100) - 5} 165 ${260 - (240 * percentage / 100)} L 165 ${260 - (240 * percentage / 100) + 10} L 35 ${260 - (240 * percentage / 100) + 10} Z`}
-                  fill={colors.waterSurface}
-                  opacity="0.6"
-                >
-                  <animate
-                    attributeName="d"
-                    dur="3s"
-                    repeatCount="indefinite"
-                    values={`
-                      M 35 ${260 - (240 * percentage / 100)} Q 60 ${260 - (240 * percentage / 100) - 5} 85 ${260 - (240 * percentage / 100)} T 135 ${260 - (240 * percentage / 100)} Q 150 ${260 - (240 * percentage / 100) - 5} 165 ${260 - (240 * percentage / 100)} L 165 ${260 - (240 * percentage / 100) + 10} L 35 ${260 - (240 * percentage / 100) + 10} Z;
-                      M 35 ${260 - (240 * percentage / 100)} Q 60 ${260 - (240 * percentage / 100) + 5} 85 ${260 - (240 * percentage / 100)} T 135 ${260 - (240 * percentage / 100)} Q 150 ${260 - (240 * percentage / 100) + 5} 165 ${260 - (240 * percentage / 100)} L 165 ${260 - (240 * percentage / 100) + 10} L 35 ${260 - (240 * percentage / 100) + 10} Z;
-                      M 35 ${260 - (240 * percentage / 100)} Q 60 ${260 - (240 * percentage / 100) - 5} 85 ${260 - (240 * percentage / 100)} T 135 ${260 - (240 * percentage / 100)} Q 150 ${260 - (240 * percentage / 100) - 5} 165 ${260 - (240 * percentage / 100)} L 165 ${260 - (240 * percentage / 100) + 10} L 35 ${260 - (240 * percentage / 100) + 10} Z
-                    `}
-                  />
-                </path>
+                <WaterSurfaceWave 
+                  waterLevel={260 - (240 * animatedPercentage / 100)}
+                  color={colors.waterSurface}
+                />
               </g>
               
               {/* Bucket handle */}
@@ -137,7 +216,7 @@ export function WaterBucket({ percentage, message, totalCapacityMcm, totalStorag
             {/* Percentage Text */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center bg-white/90 rounded-lg px-4 py-2 shadow-md">
-                <div className={`${colors.textColor} text-2xl font-bold`}>{percentage}%</div>
+                <div className={`${colors.textColor} text-2xl font-bold transition-all duration-300`}>{displayPercentage}%</div>
                 <div className="text-gray-600 text-sm">Full</div>
               </div>
             </div>

@@ -234,11 +234,7 @@ export function LandingPage() {
               )}
             </div>
 
-            {loading ? (
-              <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
-                <p className="text-gray-600">Loading dam capacity data...</p>
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
                 <p className="text-red-600">Error: {error}</p>
               </div>
