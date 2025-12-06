@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { WaterBucket } from "@/components/WaterBucket";
-import { Menu, ChevronDown, ChevronUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { PeriodPicker } from "@/components/PeriodPicker";
+import { Menu } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -14,16 +15,16 @@ import {
 } from "@/components/ui/sheet";
 import Link from "next/link";
 import { getSummary, SummaryModel } from "@/services/summary";
+import { usePeriodStore } from "@/store/period-store";
 
 export function LandingPage() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [summary, setSummary] = useState<SummaryModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [targetDate, setTargetDate] = useState("");
+  const { period, setPeriod, resetPeriod } = usePeriodStore();
 
-  const fetchSummary = async (date?: string) => {
+  const fetchSummary = useCallback(async (date?: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -35,22 +36,20 @@ export function LandingPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSummary();
   }, []);
 
-  const handleDateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchSummary(targetDate || undefined);
-    setIsDatePickerOpen(false);
+  useEffect(() => {
+    fetchSummary(period || undefined);
+  }, [period, fetchSummary]);
+
+  const handleDateSubmit = (date: string) => {
+    setPeriod(date);
+    fetchSummary(date || undefined);
   };
 
   const handleResetDate = () => {
-    setTargetDate("");
+    resetPeriod();
     fetchSummary();
-    setIsDatePickerOpen(false);
   };
 
   const handleMenuClick = () => {
@@ -152,66 +151,17 @@ export function LandingPage() {
                     totalStorageMcm={summary.totalStorageMcm}
                 />
             ) : null}
-            {/* Date Picker Dropdown */}
-            <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto mb-6">
-                <button
-                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                    className="w-full flex items-center justify-between text-left"
-                >
-            <span className="text-lg font-semibold text-gray-900">
-              Filter by Date
-            </span>
-                    {isDatePickerOpen ? (
-                        <ChevronUp className="h-5 w-5 text-gray-500" />
-                    ) : (
-                        <ChevronDown className="h-5 w-5 text-gray-500" />
-                    )}
-                </button>
-
-                {isDatePickerOpen && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                        <form onSubmit={handleDateSubmit} className="flex flex-col sm:flex-row gap-4">
-                            <div className="flex-1">
-                                <label htmlFor="target-date" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Target Date (DD.MM.YYYY)
-                                </label>
-                                <input
-                                    id="target-date"
-                                    type="text"
-                                    placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
-                                    value={targetDate}
-                                    onChange={(e) => setTargetDate(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    pattern="\d{2}\.\d{2}\.\d{4}"
-                                    title="Please enter date in DD.MM.YYYY format"
-                                />
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Leave empty to view current data
-                                </p>
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                    {loading ? "Loading..." : "Apply"}
-                                </Button>
-                                {targetDate && (
-                                    <Button
-                                        type="button"
-                                        onClick={handleResetDate}
-                                        variant="outline"
-                                        disabled={loading}
-                                    >
-                                        Reset
-                                    </Button>
-                                )}
-                            </div>
-                        </form>
-                    </div>
-                )}
-            </div>
+            {/* Period Picker */}
+            <PeriodPicker
+                value={period}
+                onChange={setPeriod}
+                onSubmit={handleDateSubmit}
+                onReset={handleResetDate}
+                showReset={!!period}
+                loading={loading}
+                dateFormat="DD.MM.YYYY"
+                variant="dropdown"
+            />
         </div>
 
           {/* About Section */}

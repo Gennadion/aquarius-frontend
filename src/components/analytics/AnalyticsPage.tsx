@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Droplets, Calendar, MapPin, Mountain, Maximize2, TrendingDown, TrendingUp } from "lucide-react";
+import { PeriodPicker } from "@/components/PeriodPicker";
+import { ArrowLeft, Droplets, MapPin, Mountain, Maximize2, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 import { Cylinder } from './Cylinder';
+import { usePeriodStore } from "@/store/period-store";
 
 // Dynamically import ApexCharts to avoid SSR issues
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -71,38 +73,18 @@ const waterLevelData = [
 ];
 
 function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: string) => void }) {
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('2025-12-06');
+  const { period, setPeriod } = usePeriodStore();
+  const displayPeriod = period || new Date().toISOString().split("T")[0];
 
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* Period Button */}
-      <div className="flex justify-center mb-8">
-        <div className="relative">
-          <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
-            className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
-          >
-            <Calendar className="w-5 h-5 text-blue-600" />
-            <span className="text-gray-900">Period: {selectedDate}</span>
-          </button>
-          
-          {showDatePicker && (
-            <div className="absolute top-14 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl p-4 z-10">
-              <label className="block text-gray-700 mb-2 text-sm">Select Date</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setShowDatePicker(false);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Period Picker */}
+      <PeriodPicker
+        value={displayPeriod}
+        onChange={setPeriod}
+        dateFormat="YYYY-MM-DD"
+        variant="button"
+      />
 
       <div className="text-center mb-12">
         <div className="flex items-center justify-center gap-3 mb-4">
@@ -188,6 +170,9 @@ function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: st
 }
 
 function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
+  const { period, setPeriod } = usePeriodStore();
+  const displayPeriod = period || new Date().toISOString().split("T")[0];
+
   const getStatusColor = () => {
     switch (dam.status) {
       case 'critical':
@@ -321,7 +306,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="flex gap-4 mb-8">
+      <div className="flex gap-4 mb-8 items-center">
         <button
           onClick={onGoBack}
           className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
@@ -330,12 +315,13 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
           <span className="text-gray-900">Back to Dashboard</span>
         </button>
         
-        <button
-          className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
-        >
-          <Calendar className="w-5 h-5 text-blue-600" />
-          <span className="text-gray-900">Period: 2025-12-06</span>
-        </button>
+        <PeriodPicker
+          value={displayPeriod}
+          onChange={setPeriod}
+          dateFormat="YYYY-MM-DD"
+          variant="button"
+          className="mb-0 inline"
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
