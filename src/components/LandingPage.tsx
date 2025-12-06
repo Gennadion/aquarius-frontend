@@ -132,10 +132,10 @@ export function LandingPage() {
           {/* Hero Content */}
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold text-blue-900 mb-4">
-              Cyprus Dam Data Tracking
+              Paphos Dam Data Tracking
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Real-time monitoring and analytics for Cyprus
+              Real-time monitoring and analytics for Paphos
               water reservoirs
             </p>
           </div>
@@ -241,7 +241,7 @@ export function LandingPage() {
             ) : summary ? (
               <WaterBucket 
                 percentage={Math.round(summary.totalPercentage)}
-                message={`All Cyprus dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
+                message={`All Paphos dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
                 totalCapacityMcm={summary.totalCapacityMcm}
                 totalStorageMcm={summary.totalStorageMcm}
               />
@@ -271,7 +271,7 @@ export function LandingPage() {
               </h3>
               <p className="text-gray-600">
                 Monitor water levels and reservoir capacity in
-                real-time across all Cyprus dams.
+                real-time across all Paphos dams.
               </p>
             </div>
 
