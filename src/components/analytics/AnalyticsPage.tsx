@@ -298,7 +298,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
           className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
         >
           <ArrowLeft className="w-5 h-5 text-blue-600" />
-          <span className="text-gray-900">Back to Dashboard</span>
+          <span className="text-gray-900">Back to all dams</span>
         </button>
       </div>
 
