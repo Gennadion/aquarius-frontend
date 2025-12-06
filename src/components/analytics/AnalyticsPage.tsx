@@ -64,16 +64,24 @@ function mapDamModelToDam(model: DamModel, id: string): Dam {
   };
 }
 
-// Parse date string that could be in YYYY-MM-DD or DD.MM.YYYY format
+// Get today's date in DD.MM.YYYY format
+function getTodayDDMMYYYY(): string {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+// Parse date string in DD.MM.YYYY format
 function parseDate(dateStr: string): Date {
-  // Check if it's DD.MM.YYYY format
   const ddMmYyyyPattern = /^(\d{2})\.(\d{2})\.(\d{4})$/;
   const match = dateStr.match(ddMmYyyyPattern);
   if (match) {
     const [, day, month, year] = match;
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
-  // Otherwise assume YYYY-MM-DD or other standard format
+  // Fallback to standard Date parsing
   return new Date(dateStr);
 }
 
@@ -507,18 +515,9 @@ export function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   
   const { period, setPeriod } = usePeriodStore();
-  const displayPeriod = period || new Date().toISOString().split("T")[0];
+  const displayPeriod = period || getTodayDDMMYYYY();
   const pathname = usePathname();
 
-  // Convert date from YYYY-MM-DD to DD.MM.YYYY format
-  const convertToApiDateFormat = useCallback((date: string): string => {
-    const yyyyMmDdPattern = /^\d{4}-\d{2}-\d{2}$/;
-    if (yyyyMmDdPattern.test(date)) {
-      const [year, month, day] = date.split('-');
-      return `${day}.${month}.${year}`;
-    }
-    return date;
-  }, []);
 
   // Fetch all dams data
   const fetchDams = useCallback(async (targetDate?: string) => {
@@ -526,10 +525,8 @@ export function AnalyticsPage() {
     setError(null);
     
     try {
-      const apiDate = targetDate ? convertToApiDateFormat(targetDate) : undefined;
-      
       const damPromises = DAM_NAMES.map((name, index) => 
-        getDam({ name, targetDate: apiDate })
+        getDam({ name, targetDate })
           .then(model => mapDamModelToDam(model, String(index + 1)))
       );
       
@@ -541,7 +538,7 @@ export function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [convertToApiDateFormat]);
+  }, []);
 
   // Fetch dams on mount and when period changes
   useEffect(() => {
@@ -596,7 +593,6 @@ export function AnalyticsPage() {
           <PeriodPicker
             value={displayPeriod}
             onChange={setPeriod}
-            dateFormat={selectedDam ? "YYYY-MM-DD" : "DD.MM.YYYY"}
             className="mb-0 inline"
           />
         </div>

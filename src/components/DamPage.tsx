@@ -7,9 +7,18 @@ import { usePeriodStore } from "@/store/period-store";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { usePathname } from "next/navigation";
 
+// Get today's date in DD.MM.YYYY format
+function getTodayDDMMYYYY(): string {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
 export function DamPage() {
   const { period, setPeriod } = usePeriodStore();
-  const displayPeriod = period || new Date().toISOString().split("T")[0];
+  const displayPeriod = period || getTodayDDMMYYYY();
   const pathname = usePathname();
 
 
@@ -56,7 +65,6 @@ export function DamPage() {
           <PeriodPicker
             value={displayPeriod}
             onChange={setPeriod}
-            dateFormat="DD.MM.YYYY"
             className="mb-0 inline"
           />
         </div>
