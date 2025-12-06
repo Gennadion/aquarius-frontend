@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { PeriodPicker } from "@/components/PeriodPicker";
-import { ArrowLeft, Droplets, MapPin, Mountain, Maximize2, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowLeft, Droplets, MapPin, Mountain, Maximize2, TrendingDown, TrendingUp, Loader2 } from "lucide-react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 import { Cylinder } from './Cylinder';
 import { usePeriodStore } from "@/store/period-store";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { usePathname } from "next/navigation";
+import { getDam, DamModel, DamName } from "@/services/dam";
 
 // Dynamically import ApexCharts to avoid SSR issues
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -23,58 +24,107 @@ export interface Dam {
   lastUpdated: string;
   location: string;
   heightAboveSeaLevel: number;
-  surfaceArea: number;
+  storageMcm: number;
+  imageUrl?: string;
+  wikipediaUrl?: string;
 }
 
-export const damsData: Dam[] = [
-  {
-    id: '1',
-    name: 'Asprokremmos Dam',
-    currentLevel: 15,
-    capacity: 52.375,
-    status: 'critical',
-    lastUpdated: '2025-12-06',
+// Dam names available from API
+const DAM_NAMES: DamName[] = ['Asprokremmos', 'Evretou', 'Mavrokolympos'];
+
+// Helper function to determine status from percentage
+function getStatusFromPercentage(percentage: number): 'critical' | 'warning' | 'normal' {
+  if (percentage < 30) return 'critical';
+  if (percentage < 60) return 'warning';
+  return 'normal';
+}
+
+// Helper to format date for display (DD.MM.YYYY)
+function formatDateForDisplay(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+// Map API DamModel to component Dam interface
+function mapDamModelToDam(model: DamModel, id: string): Dam {
+  return {
+    id,
+    name: `${model.dam.name} Dam`,
+    currentLevel: Math.round(model.dam.percentage),
+    capacity: model.dam.capacityMcm,
+    status: getStatusFromPercentage(model.dam.percentage),
+    lastUpdated: formatDateForDisplay(model.dataDate),
     location: 'Paphos District',
-    heightAboveSeaLevel: 145,
-    surfaceArea: 2.1
-  },
-  {
-    id: '2',
-    name: 'Evretou Dam',
-    currentLevel: 45,
-    capacity: 24.5,
-    status: 'warning',
-    lastUpdated: '2025-12-06',
-    location: 'Paphos District',
-    heightAboveSeaLevel: 240,
-    surfaceArea: 1.2
-  },
-  {
-    id: '3',
-    name: 'Mavrokolympos Dam',
-    currentLevel: 72,
-    capacity: 5.2,
-    status: 'normal',
-    lastUpdated: '2025-12-06',
-    location: 'Paphos District',
-    heightAboveSeaLevel: 320,
-    surfaceArea: 0.4
+    heightAboveSeaLevel: model.dam.height,
+    storageMcm: model.dam.storageMcm,
+    imageUrl: model.dam.imageUrl,
+    wikipediaUrl: model.dam.wikipediaUrl,
+  };
+}
+
+// Parse date string that could be in YYYY-MM-DD or DD.MM.YYYY format
+function parseDate(dateStr: string): Date {
+  // Check if it's DD.MM.YYYY format
+  const ddMmYyyyPattern = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+  const match = dateStr.match(ddMmYyyyPattern);
+  if (match) {
+    const [, day, month, year] = match;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
-];
+  // Otherwise assume YYYY-MM-DD or other standard format
+  return new Date(dateStr);
+}
 
-// Artificial data for the water level trend
-const waterLevelData = [
-  { date: '2025-11-01', level: 68 },
-  { date: '2025-11-05', level: 65 },
-  { date: '2025-11-10', level: 62 },
-  { date: '2025-11-15', level: 58 },
-  { date: '2025-11-20', level: 55 },
-  { date: '2025-11-25', level: 52 },
-  { date: '2025-11-30', level: 48 },
-  { date: '2025-12-05', level: 45 },
-];
+// Generate mock trend data with the last value being the actual current level
+// Each day is subtracted one at a time, with the last date matching the selected period
+function generateMockTrendData(currentLevel: number, endDate?: string): WaterLevelDataPoint[] {
+  const end = endDate ? parseDate(endDate) : new Date();
+  const dataPoints: WaterLevelDataPoint[] = [];
+  
+  // Number of days to show (8 data points = 8 days)
+  const numDays = 8;
+  
+  // Start from a slightly higher level and trend down to current
+  const startLevel = Math.min(100, currentLevel + 3 + Math.random() * 2);
+  
+  for (let daysAgo = numDays - 1; daysAgo >= 0; daysAgo--) {
+    const date = new Date(end);
+    date.setDate(date.getDate() - daysAgo);
+    
+    let level: number;
+    if (daysAgo === 0) {
+      // Last point (current period) is the actual current level
+      level = currentLevel;
+    } else {
+      // Interpolate from start level to current level with minimal noise
+      const progress = (numDays - 1 - daysAgo) / (numDays - 1);
+      const baseLevel = startLevel - (startLevel - currentLevel) * progress;
+      const noise = (Math.random() - 0.5) * 0.6; // ±0.3% random variation
+      level = Math.round(Math.max(0, Math.min(100, baseLevel + noise)) * 10) / 10;
+    }
+    
+    dataPoints.push({
+      date: formatDateForDisplay(date),
+      level,
+    });
+  }
+  
+  return dataPoints;
+}
 
-function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: string) => void }) {
+function DamDashboard({ 
+  dams, 
+  onSelectDam, 
+  loading, 
+  error 
+}: { 
+  dams: Dam[]; 
+  onSelectDam: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+}) {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
@@ -87,46 +137,62 @@ function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: st
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {dams.map((dam) => (
-          <button
-            key={dam.id}
-            onClick={() => onSelectDam(dam.id)}
-            className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400"
-          >
-            <Cylinder
-              level={dam.currentLevel}
-              status={dam.status}
-              name={dam.name}
-            />
-            
-            <div className="mt-6 text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{dam.name}</h3>
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-gray-700 font-medium">
-                  {dam.currentLevel}%
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm text-white ${
-                    dam.status === 'critical'
-                      ? 'bg-red-500'
-                      : dam.status === 'warning'
-                      ? 'bg-orange-500'
-                      : 'bg-green-500'
-                  }`}
-                >
-                  {dam.status === 'critical' && 'Critical'}
-                  {dam.status === 'warning' && 'Warning'}
-                  {dam.status === 'normal' && 'Normal'}
-                </span>
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+          <p className="text-gray-600">Loading dam data...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+          <p className="font-medium">Error loading data</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {!loading && dams.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {dams.map((dam) => (
+            <button
+              key={dam.id}
+              onClick={() => onSelectDam(dam.id)}
+              className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400"
+            >
+              <Cylinder
+                level={dam.currentLevel}
+                status={dam.status}
+                name={dam.name}
+              />
+              
+              <div className="mt-6 text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{dam.name}</h3>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="text-gray-700 font-medium">
+                    {dam.currentLevel}%
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm text-white ${
+                      dam.status === 'critical'
+                        ? 'bg-red-500'
+                        : dam.status === 'warning'
+                        ? 'bg-orange-500'
+                        : 'bg-green-500'
+                    }`}
+                  >
+                    {dam.status === 'critical' && 'Critical'}
+                    {dam.status === 'warning' && 'Warning'}
+                    {dam.status === 'normal' && 'Normal'}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-sm">
+                  Capacity: {dam.capacity} MCM
+                </p>
               </div>
-              <p className="text-gray-500 text-sm">
-                Capacity: {dam.capacity} MCM
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="mt-12 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-md p-6">
@@ -160,7 +226,22 @@ function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: st
   );
 }
 
-function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
+interface WaterLevelDataPoint {
+  date: string;
+  level: number;
+}
+
+function DamDetail({ 
+  dam, 
+  onGoBack,
+  currentPeriod
+}: { 
+  dam: Dam; 
+  onGoBack: () => void;
+  currentPeriod?: string;
+}) {
+  // Generate mock trend data with last value being the actual current level
+  const trendData = generateMockTrendData(dam.currentLevel, currentPeriod);
   const getStatusColor = () => {
     switch (dam.status) {
       case 'critical':
@@ -182,8 +263,6 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
         return 'Water level is within normal operating range.';
     }
   };
-
-  const currentVolume = (dam.currentLevel / 100) * dam.capacity;
 
   // ApexCharts configuration for water level trend
   const chartOptions: ApexCharts.ApexOptions = {
@@ -227,7 +306,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
       }
     },
     xaxis: {
-      categories: waterLevelData.map(d => d.date),
+      categories: trendData.map(d => d.date),
       labels: {
         style: {
           colors: '#6b7280',
@@ -284,12 +363,13 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
 
   const chartSeries = [{
     name: 'Water Level',
-    data: waterLevelData.map(d => d.level)
+    data: trendData.map(d => d.level)
   }];
 
   // Get trend direction
-  const firstLevel = waterLevelData[0].level;
-  const lastLevel = waterLevelData[waterLevelData.length - 1].level;
+  const hasTrendData = trendData.length >= 2;
+  const firstLevel = hasTrendData ? trendData[0].level : 0;
+  const lastLevel = hasTrendData ? trendData[trendData.length - 1].level : 0;
   const trendDown = lastLevel < firstLevel;
 
   return (
@@ -332,7 +412,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-1">{dam.currentLevel}%</p>
               <p className="text-gray-600">
-                {currentVolume.toFixed(2)} MCM of {dam.capacity} MCM
+                {dam.storageMcm.toFixed(2)} MCM of {dam.capacity} MCM
               </p>
               
               {/* Progress bar */}
@@ -353,21 +433,21 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-3">
                 <Mountain className="w-6 h-6 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Elevation</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Dam Height</h3>
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-1">
                 {dam.heightAboveSeaLevel} meters
               </p>
-              <p className="text-gray-600">above sea level</p>
+              <p className="text-gray-600">structural height</p>
             </div>
 
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-3">
                 <Maximize2 className="w-6 h-6 text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Surface Area</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Capacity</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{dam.surfaceArea} km²</p>
-              <p className="text-gray-600">at full capacity</p>
+              <p className="text-3xl font-bold text-gray-900 mb-1">{dam.capacity} MCM</p>
+              <p className="text-gray-600">maximum storage</p>
             </div>
           </div>
 
@@ -378,12 +458,14 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
                 <Droplets className="w-6 h-6 text-blue-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Water Level Trend</h3>
               </div>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${trendDown ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                {trendDown ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
-                <span className="text-sm font-medium">
-                  {Math.abs(lastLevel - firstLevel)}% {trendDown ? 'decrease' : 'increase'}
-                </span>
-              </div>
+              {hasTrendData && (
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${trendDown ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  {trendDown ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+                  <span className="text-sm font-medium">
+                    {Math.abs(lastLevel - firstLevel).toFixed(1)}% {trendDown ? 'decrease' : 'increase'}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="h-[300px]">
               <Chart
@@ -420,12 +502,54 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
 
 export function AnalyticsPage() {
   const [selectedDamId, setSelectedDamId] = useState<string | null>(null);
+  const [dams, setDams] = useState<Dam[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const { period, setPeriod } = usePeriodStore();
   const displayPeriod = period || new Date().toISOString().split("T")[0];
   const pathname = usePathname();
 
+  // Convert date from YYYY-MM-DD to DD.MM.YYYY format
+  const convertToApiDateFormat = useCallback((date: string): string => {
+    const yyyyMmDdPattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (yyyyMmDdPattern.test(date)) {
+      const [year, month, day] = date.split('-');
+      return `${day}.${month}.${year}`;
+    }
+    return date;
+  }, []);
+
+  // Fetch all dams data
+  const fetchDams = useCallback(async (targetDate?: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const apiDate = targetDate ? convertToApiDateFormat(targetDate) : undefined;
+      
+      const damPromises = DAM_NAMES.map((name, index) => 
+        getDam({ name, targetDate: apiDate })
+          .then(model => mapDamModelToDam(model, String(index + 1)))
+      );
+      
+      const results = await Promise.all(damPromises);
+      setDams(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dam data');
+      console.error('Error fetching dams:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [convertToApiDateFormat]);
+
+  // Fetch dams on mount and when period changes
+  useEffect(() => {
+    fetchDams(period || undefined);
+  }, [period, fetchDams]);
+
   const selectedDam = selectedDamId 
-    ? damsData.find(dam => dam.id === selectedDamId) 
+    ? dams.find(dam => dam.id === selectedDamId) 
     : null;
 
 
@@ -481,9 +605,18 @@ export function AnalyticsPage() {
       {/* Main Content */}
       <div className="flex-1 bg-gradient-to-b from-blue-50 to-white">
         {!selectedDam ? (
-          <DamDashboard dams={damsData} onSelectDam={setSelectedDamId} />
+          <DamDashboard 
+            dams={dams} 
+            onSelectDam={setSelectedDamId}
+            loading={loading}
+            error={error}
+          />
         ) : (
-          <DamDetail dam={selectedDam} onGoBack={() => setSelectedDamId(null)} />
+          <DamDetail 
+            dam={selectedDam} 
+            onGoBack={() => setSelectedDamId(null)}
+            currentPeriod={period || undefined}
+          />
         )}
       </div>
 
