@@ -4,25 +4,17 @@ import { Button } from "@/components/ui/button";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { WaterBucket } from "@/components/WaterBucket";
 import { PeriodPicker } from "@/components/PeriodPicker";
-import { Menu } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import Link from "next/link";
 import { getSummary, SummaryModel } from "@/services/summary";
 import { usePeriodStore } from "@/store/period-store";
+import { usePathname } from "next/navigation";
 
 export function LandingPage() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
   const [summary, setSummary] = useState<SummaryModel | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { period, setPeriod, resetPeriod } = usePeriodStore();
+  const pathname = usePathname();
 
   // Convert date from YYYY-MM-DD to DD.MM.YYYY format if needed
   const convertToApiDateFormat = (date: string): string => {
@@ -38,7 +30,6 @@ export function LandingPage() {
 
   const fetchSummary = useCallback(async (date?: string) => {
     try {
-      setLoading(true);
       setError(null);
       const apiDate = date ? convertToApiDateFormat(date) : undefined;
       const data = await getSummary(apiDate ? { targetDate: apiDate } : undefined);
@@ -46,8 +37,6 @@ export function LandingPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load summary data");
       console.error("Error fetching summary:", err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -55,23 +44,6 @@ export function LandingPage() {
     fetchSummary(period || undefined);
   }, [period, fetchSummary]);
 
-  const handleDateSubmit = (date: string) => {
-    setPeriod(date);
-    fetchSummary(date || undefined);
-  };
-
-  const handleResetDate = () => {
-    resetPeriod();
-    fetchSummary();
-  };
-
-  const handleMenuClick = () => {
-    setIsNavOpen(true);
-  };
-
-  const handlePlaceholder2Click = () => {
-    console.log("Placeholder 2 clicked");
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,48 +51,7 @@ export function LandingPage() {
       <nav className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <Sheet open={isNavOpen} onOpenChange={setIsNavOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleMenuClick}
-                  className="text-blue-600 hover:bg-blue-50"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <SheetHeader>
-                  <SheetTitle className="text-blue-600">Navigation</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 mt-8">
-                  <Link href="/dam" onClick={() => setIsNavOpen(false)}>
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white justify-start"
-                    >
-                      Dam
-                    </Button>
-                  </Link>
-                  <Link href="/analytics" onClick={() => setIsNavOpen(false)}>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                    >
-                      Analytics
-                    </Button>
-                  </Link>
-                  <Button
-                    onClick={handlePlaceholder2Click}
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
-                    Placeholder Text
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+          <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center overflow-hidden">
               <ImageWithFallback
                 src="https://images.unsplash.com/photo-1645616265871-be6186d5a019?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYW0lMjB3YXRlciUyMHJlc2Vydm9pcnxlbnwxfHx8fDE3NjUwMjQ3Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
@@ -131,16 +62,32 @@ export function LandingPage() {
             <span className="text-blue-600 font-semibold tracking-wide">
               AQUARIUS
             </span>
+          </Link>
+
+          {/* Navigation Links */}
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button
+                variant={pathname === "/" ? "default" : "outline"}
+                className={pathname === "/" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+              >
+                Home
+              </Button>
+            </Link>
+            <Link href="/analytics">
+              <Button
+                variant={pathname === "/analytics" ? "default" : "outline"}
+                className={pathname === "/analytics" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+              >
+                Dams
+              </Button>
+            </Link>
           </div>
           
           {/* Period Picker */}
           <PeriodPicker
-            value={period}
+            value={period || ""}
             onChange={setPeriod}
-            onSubmit={handleDateSubmit}
-            onReset={handleResetDate}
-            showReset={!!period}
-            loading={loading}
             dateFormat="DD.MM.YYYY"
             className="mb-0 inline"
           />

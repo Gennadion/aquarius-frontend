@@ -8,6 +8,8 @@ import Link from "next/link";
 import dynamic from 'next/dynamic';
 import { Cylinder } from './Cylinder';
 import { usePeriodStore } from "@/store/period-store";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
+import { usePathname } from "next/navigation";
 
 // Dynamically import ApexCharts to avoid SSR issues
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -298,7 +300,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
           className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
         >
           <ArrowLeft className="w-5 h-5 text-blue-600" />
-          <span className="text-gray-900">Back to all dams</span>
+          <span className="text-gray-900">Back to all Dams</span>
         </button>
       </div>
 
@@ -420,25 +422,51 @@ export function AnalyticsPage() {
   const [selectedDamId, setSelectedDamId] = useState<string | null>(null);
   const { period, setPeriod } = usePeriodStore();
   const displayPeriod = period || new Date().toISOString().split("T")[0];
+  const pathname = usePathname();
 
   const selectedDam = selectedDamId 
     ? damsData.find(dam => dam.id === selectedDamId) 
     : null;
+
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation Bar */}
       <nav className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              className="text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Back to Home
-            </Button>
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center overflow-hidden">
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1645616265871-be6186d5a019?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYW0lMjB3YXRlciUyMHJlc2Vydm9pcnxlbnwxfHx8fDE3NjUwMjQ3Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                alt="Water background"
+                className="w-full h-full object-cover opacity-60"
+              />
+            </div>
+            <span className="text-blue-600 font-semibold tracking-wide">
+              AQUARIUS
+            </span>
           </Link>
+
+          {/* Navigation Links */}
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button
+                variant={pathname === "/" ? "default" : "outline"}
+                className={pathname === "/" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+              >
+                Home
+              </Button>
+            </Link>
+            <Link href="/analytics">
+              <Button
+                variant={pathname === "/analytics" ? "default" : "outline"}
+                className={pathname === "/analytics" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+              >
+                Dams
+              </Button>
+            </Link>
+          </div>
           
           {/* Period Picker */}
           <PeriodPicker
