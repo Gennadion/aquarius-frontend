@@ -1,22 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export interface PeriodPickerProps {
   /** Current date value. For DD.MM.YYYY format, pass string like "15.01.2025". For YYYY-MM-DD format, pass string like "2025-01-15" */
   value: string;
   /** Callback when date changes */
   onChange: (date: string) => void;
-  /** Optional callback when form is submitted (for DD.MM.YYYY format) */
-  onSubmit?: (date: string) => void;
-  /** Optional callback when reset button is clicked */
-  onReset?: () => void;
-  /** Whether to show reset button */
-  showReset?: boolean;
-  /** Loading state */
-  loading?: boolean;
   /** Date format to use */
   dateFormat?: "DD.MM.YYYY" | "YYYY-MM-DD";
   /** Label for the period picker */
@@ -28,41 +19,54 @@ export interface PeriodPickerProps {
 export function PeriodPicker({
   value,
   onChange,
-  onSubmit,
-  onReset,
-  showReset = false,
-  loading = false,
   dateFormat = "YYYY-MM-DD",
   label,
   className = "",
 }: PeriodPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local value with prop value (only when prop changes from parent)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Debounce onChange callback (only when localValue changes from user input)
+  useEffect(() => {
+    // Skip debounce if localValue matches the prop value (synced from parent)
+    if (localValue === value) {
+      return;
+    }
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      onChange(localValue);
+    }, 1000);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [localValue, onChange, value]);
 
   const handleDateChange = (newDate: string) => {
-    onChange(newDate);
+    setLocalValue(newDate);
     if (dateFormat === "YYYY-MM-DD") {
       setIsOpen(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSubmit) {
-      onSubmit(value);
-    }
-    setIsOpen(false);
+  const handleTextChange = (newDate: string) => {
+    setLocalValue(newDate);
   };
 
-  const handleReset = () => {
-    if (onReset) {
-      onReset();
-    }
-    setIsOpen(false);
-  };
+  const displayValue = localValue || (dateFormat === "YYYY-MM-DD" ? new Date().toISOString().split("T")[0] : "");
 
-  const displayValue = value || (dateFormat === "YYYY-MM-DD" ? new Date().toISOString().split("T")[0] : "");
-
-  // Button variant
   // Check if className contains "mb-0" or "inline" to determine if it should be inline
   const isInline = className.includes("mb-0") || className.includes("inline");
   const containerClass = isInline 
@@ -88,41 +92,19 @@ export function PeriodPicker({
               {dateFormat === "DD.MM.YYYY" ? "Target Date (DD.MM.YYYY)" : "Select Date"}
             </label>
             {dateFormat === "DD.MM.YYYY" ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
-                  value={value}
-                  onChange={(e) => onChange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-                  pattern="\d{2}\.\d{2}\.\d{4}"
-                  title="Please enter date in DD.MM.YYYY format"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    size="sm"
-                  >
-                    {loading ? "Loading..." : "Apply"}
-                  </Button>
-                  {showReset && value && (
-                    <Button
-                      onClick={handleReset}
-                      variant="outline"
-                      disabled={loading}
-                      size="sm"
-                    >
-                      Reset
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <input
+                type="text"
+                placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
+                value={localValue}
+                onChange={(e) => handleTextChange(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+                pattern="\d{2}\.\d{2}\.\d{4}"
+                title="Please enter date in DD.MM.YYYY format"
+              />
             ) : (
               <input
                 type="date"
-                value={value}
+                value={localValue}
                 onChange={(e) => handleDateChange(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
