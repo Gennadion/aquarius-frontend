@@ -57,10 +57,6 @@ export function LandingPage() {
     setIsNavOpen(true);
   };
 
-  const handlePlaceholder1Click = () => {
-    console.log("Placeholder 1 clicked");
-  };
-
   const handlePlaceholder2Click = () => {
     console.log("Placeholder 2 clicked");
   };
@@ -95,13 +91,14 @@ export function LandingPage() {
                       Dam
                     </Button>
                   </Link>
-                  <Button
-                    onClick={handlePlaceholder1Click}
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
-                    Placeholder Text
-                  </Button>
+                  <Link href="/analytics" onClick={() => setIsNavOpen(false)}>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      Analytics
+                    </Button>
+                  </Link>
                   <Button
                     onClick={handlePlaceholder2Click}
                     variant="outline"
