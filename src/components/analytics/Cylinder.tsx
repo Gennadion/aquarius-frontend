@@ -14,7 +14,7 @@ export function Cylinder({ level, status }: CylinderProps) {
       case 'warning':
         return 'from-orange-400 to-orange-600';
       case 'normal':
-        return 'from-blue-400 to-blue-600';
+        return 'from-green-400 to-green-600';
     }
   };
 
