@@ -24,11 +24,24 @@ export function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const { period, setPeriod, resetPeriod } = usePeriodStore();
 
+  // Convert date from YYYY-MM-DD to DD.MM.YYYY format if needed
+  const convertToApiDateFormat = (date: string): string => {
+    // Check if date is in YYYY-MM-DD format (e.g., "2025-01-15")
+    const yyyyMmDdPattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (yyyyMmDdPattern.test(date)) {
+      const [year, month, day] = date.split('-');
+      return `${day}.${month}.${year}`;
+    }
+    // If already in DD.MM.YYYY format or empty, return as-is
+    return date;
+  };
+
   const fetchSummary = useCallback(async (date?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getSummary(date ? { targetDate: date } : undefined);
+      const apiDate = date ? convertToApiDateFormat(date) : undefined;
+      const data = await getSummary(apiDate ? { targetDate: apiDate } : undefined);
       setSummary(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load summary data");
@@ -119,6 +132,18 @@ export function LandingPage() {
               AQUARIUS
             </span>
           </div>
+          
+          {/* Period Picker */}
+          <PeriodPicker
+            value={period}
+            onChange={setPeriod}
+            onSubmit={handleDateSubmit}
+            onReset={handleResetDate}
+            showReset={!!period}
+            loading={loading}
+            dateFormat="DD.MM.YYYY"
+            className="mb-0 inline"
+          />
         </div>
       </nav>
 
@@ -151,17 +176,6 @@ export function LandingPage() {
                     totalStorageMcm={summary.totalStorageMcm}
                 />
             ) : null}
-            {/* Period Picker */}
-            <PeriodPicker
-                value={period}
-                onChange={setPeriod}
-                onSubmit={handleDateSubmit}
-                onReset={handleResetDate}
-                showReset={!!period}
-                loading={loading}
-                dateFormat="DD.MM.YYYY"
-                variant="dropdown"
-            />
         </div>
 
           {/* About Section */}

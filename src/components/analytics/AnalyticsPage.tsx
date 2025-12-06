@@ -73,19 +73,8 @@ const waterLevelData = [
 ];
 
 function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: string) => void }) {
-  const { period, setPeriod } = usePeriodStore();
-  const displayPeriod = period || new Date().toISOString().split("T")[0];
-
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* Period Picker */}
-      <PeriodPicker
-        value={displayPeriod}
-        onChange={setPeriod}
-        dateFormat="YYYY-MM-DD"
-        variant="button"
-      />
-
       <div className="text-center mb-12">
         <div className="flex items-center justify-center gap-3 mb-4">
           <Droplets className="w-12 h-12 text-blue-600" />
@@ -170,9 +159,6 @@ function DamDashboard({ dams, onSelectDam }: { dams: Dam[]; onSelectDam: (id: st
 }
 
 function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
-  const { period, setPeriod } = usePeriodStore();
-  const displayPeriod = period || new Date().toISOString().split("T")[0];
-
   const getStatusColor = () => {
     switch (dam.status) {
       case 'critical':
@@ -306,7 +292,7 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="flex gap-4 mb-8 items-center">
+      <div className="mb-8">
         <button
           onClick={onGoBack}
           className="flex items-center gap-2 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400"
@@ -314,14 +300,6 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
           <ArrowLeft className="w-5 h-5 text-blue-600" />
           <span className="text-gray-900">Back to Dashboard</span>
         </button>
-        
-        <PeriodPicker
-          value={displayPeriod}
-          onChange={setPeriod}
-          dateFormat="YYYY-MM-DD"
-          variant="button"
-          className="mb-0 inline"
-        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -440,6 +418,8 @@ function DamDetail({ dam, onGoBack }: { dam: Dam; onGoBack: () => void }) {
 
 export function AnalyticsPage() {
   const [selectedDamId, setSelectedDamId] = useState<string | null>(null);
+  const { period, setPeriod } = usePeriodStore();
+  const displayPeriod = period || new Date().toISOString().split("T")[0];
 
   const selectedDam = selectedDamId 
     ? damsData.find(dam => dam.id === selectedDamId) 
@@ -449,7 +429,7 @@ export function AnalyticsPage() {
     <div className="min-h-screen flex flex-col">
       {/* Navigation Bar */}
       <nav className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/">
             <Button
               variant="ghost"
@@ -459,6 +439,14 @@ export function AnalyticsPage() {
               Back to Home
             </Button>
           </Link>
+          
+          {/* Period Picker */}
+          <PeriodPicker
+            value={displayPeriod}
+            onChange={setPeriod}
+            dateFormat={selectedDam ? "YYYY-MM-DD" : "DD.MM.YYYY"}
+            className="mb-0 inline"
+          />
         </div>
       </nav>
 

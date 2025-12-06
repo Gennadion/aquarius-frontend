@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface PeriodPickerProps {
@@ -21,8 +21,6 @@ export interface PeriodPickerProps {
   dateFormat?: "DD.MM.YYYY" | "YYYY-MM-DD";
   /** Label for the period picker */
   label?: string;
-  /** Whether to show as dropdown (like LandingPage) or button (like AnalyticsPage) */
-  variant?: "dropdown" | "button";
   /** Additional className for the container */
   className?: string;
 }
@@ -36,7 +34,6 @@ export function PeriodPicker({
   loading = false,
   dateFormat = "YYYY-MM-DD",
   label,
-  variant = "button",
   className = "",
 }: PeriodPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,85 +62,7 @@ export function PeriodPicker({
 
   const displayValue = value || (dateFormat === "YYYY-MM-DD" ? new Date().toISOString().split("T")[0] : "");
 
-  if (variant === "dropdown") {
-    return (
-      <div className={`bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto mb-6 ${className}`}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between text-left"
-        >
-          <span className="text-lg font-semibold text-gray-900">
-            {label || "Filter by Date"}
-          </span>
-          {isOpen ? (
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-500" />
-          )}
-        </button>
-
-        {isOpen && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label htmlFor="target-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  {dateFormat === "DD.MM.YYYY" ? "Target Date (DD.MM.YYYY)" : "Select Date"}
-                </label>
-                {dateFormat === "DD.MM.YYYY" ? (
-                  <>
-                    <input
-                      id="target-date"
-                      type="text"
-                      placeholder="DD.MM.YYYY (e.g., 15.01.2025)"
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      pattern="\d{2}\.\d{2}\.\d{4}"
-                      title="Please enter date in DD.MM.YYYY format"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Leave empty to view current data
-                    </p>
-                  </>
-                ) : (
-                  <input
-                    id="target-date"
-                    type="date"
-                    value={value}
-                    onChange={(e) => handleDateChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                )}
-              </div>
-              <div className="flex items-end gap-2">
-                {dateFormat === "DD.MM.YYYY" && (
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {loading ? "Loading..." : "Apply"}
-                  </Button>
-                )}
-                {showReset && value && (
-                  <Button
-                    type="button"
-                    onClick={handleReset}
-                    variant="outline"
-                    disabled={loading}
-                  >
-                    Reset
-                  </Button>
-                )}
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Button variant (default)
+  // Button variant
   // Check if className contains "mb-0" or "inline" to determine if it should be inline
   const isInline = className.includes("mb-0") || className.includes("inline");
   const containerClass = isInline 
