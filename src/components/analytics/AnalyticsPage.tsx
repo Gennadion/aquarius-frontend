@@ -155,13 +155,6 @@ function DamDashboard({
         </div>
       )}
 
-      {error && !loading && (
-        <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-          <p className="font-medium">Error loading data</p>
-          <p className="text-sm">{error}</p>
-        </div>
-      )}
-
       {!loading && dams.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {dams.map((dam) => (

@@ -49,12 +49,6 @@ export default function TestPage() {
           </button>
         </div>
 
-        {error && (
-          <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg mb-8 text-red-300">
-            {error}
-          </div>
-        )}
-
         {summary && (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4 text-slate-300">

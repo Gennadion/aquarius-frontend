@@ -98,11 +98,7 @@ export function LandingPage() {
         {/* Overall Capacity Section */}
         <div className="mt-12">
 
-            {error ? (
-                <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-4xl mx-auto text-center">
-                    <p className="text-red-600">Error: {error}</p>
-                </div>
-            ) : summary ? (
+            {summary ? (
                 <WaterBucket
                     percentage={Math.round(summary.totalPercentage)}
                     message={`All Paphos dams are currently at ${Math.round(summary.totalPercentage)}% capacity. ${summary.delta > 0 ? `Water levels have increased by ${summary.delta.toFixed(1)}% compared to last year.` : summary.delta < 0 ? `Water levels have decreased by ${Math.abs(summary.delta).toFixed(1)}% compared to last year.` : 'Water levels are stable compared to last year.'} Continue monitoring for any significant changes in reservoir levels.`}
