@@ -85,30 +85,33 @@ function parseDate(dateStr: string): Date {
   return new Date(dateStr);
 }
 
-// Generate mock trend data with the last value being the actual current level
-// Each day is subtracted one at a time, with the last date matching the selected period
-function generateMockTrendData(currentLevel: number, endDate?: string): WaterLevelDataPoint[] {
-  const end = endDate ? parseDate(endDate) : new Date();
+// Generate mock trend data starting from the selected period and going forward in time
+// The first data point matches the selected period with the actual current level
+function generateMockTrendData(currentLevel: number, startDate?: string): WaterLevelDataPoint[] {
+  const start = startDate ? parseDate(startDate) : new Date();
   const dataPoints: WaterLevelDataPoint[] = [];
   
   // Number of days to show (8 data points = 8 days)
   const numDays = 8;
   
-  // Start from a slightly higher level and trend down to current
-  const startLevel = Math.min(100, currentLevel + 3 + Math.random() * 2);
+  // Project forward trend: start from current level and trend slightly up or down
+  // Simulate realistic water level changes (typically small variations)
+  const trendDirection = Math.random() > 0.5 ? 1 : -1; // Random up or down trend
+  const trendMagnitude = 0.5 + Math.random() * 1.5; // 0.5% to 2% change over period
+  const endLevel = Math.max(0, Math.min(100, currentLevel + trendDirection * trendMagnitude));
   
-  for (let daysAgo = numDays - 1; daysAgo >= 0; daysAgo--) {
-    const date = new Date(end);
-    date.setDate(date.getDate() - daysAgo);
+  for (let dayOffset = 0; dayOffset < numDays; dayOffset++) {
+    const date = new Date(start);
+    date.setDate(date.getDate() + dayOffset);
     
     let level: number;
-    if (daysAgo === 0) {
-      // Last point (current period) is the actual current level
+    if (dayOffset === 0) {
+      // First point (selected period) is the actual current level
       level = currentLevel;
     } else {
-      // Interpolate from start level to current level with minimal noise
-      const progress = (numDays - 1 - daysAgo) / (numDays - 1);
-      const baseLevel = startLevel - (startLevel - currentLevel) * progress;
+      // Interpolate from current level to projected end level with minimal noise
+      const progress = dayOffset / (numDays - 1);
+      const baseLevel = currentLevel + (endLevel - currentLevel) * progress;
       const noise = (Math.random() - 0.5) * 0.6; // ±0.3% random variation
       level = Math.round(Math.max(0, Math.min(100, baseLevel + noise)) * 10) / 10;
     }
@@ -248,7 +251,7 @@ function DamDetail({
   onGoBack: () => void;
   currentPeriod?: string;
 }) {
-  // Generate mock trend data with last value being the actual current level
+  // Generate mock trend data starting from the selected period and going forward
   const trendData = generateMockTrendData(dam.currentLevel, currentPeriod);
   const getStatusColor = () => {
     switch (dam.status) {
